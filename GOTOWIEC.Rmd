@@ -1,0 +1,216 @@
+---
+title: "Gotowiec #2"
+output: html_document
+date: '2022-06-09'
+author: "e-byznes pozdrawia"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Excercise 1** (20 pts)
+
+
+Assume that the following data comes from $N(\mu,\sigma)$ with unknown $\mu$ and $\sigma$
+
+```{r}
+c(4.07494681300632, 5.7148180969208, 3.1696871449594, 3.77524642167328, 
+4.46833324819968, 4.56771069143404, 4.26893543498955, 3.3016304744712, 
+4.18479091459935, 3.47941871946925, 3.57894570862655, 4.02342131334782, 
+3.73076384712707, 4.39041119830134, 1.46298804791452, 3.72801772377334, 
+5.09573834528924, 3.54954319943814, 5.21867233269345, 3.95197239818281, 
+3.28940759528888, 3.85639735429932, 3.89654094561459, 3.77766184858072, 
+4.11613902065076, 4.57473478500872, 3.09991078675786, 3.81102685682754, 
+3.99499558435899, 3.61166770519569, 5.30696989384061, 4.95162940967589, 
+3.49893321727876, 4.20055123121829, 4.98228404197474, 3.38113366317742, 
+3.64180416501869, 3.23219328805443, 3.32723552316927, 4.6197255709024, 
+3.98868977386315, 5.6846104466723, 4.76988344527926, 5.75081863801064, 
+3.62563656179989, 3.61950873573737, 5.51615939625618, 2.26011074048123, 
+4.51463582012669, 3.94469958851262)
+```
+
+Based on the following log-likelihood function please estimate the parameters using maximum likelihood estimation. 
+
+```{r}
+mle_pdf <- function(par, x) {
+  ll <- dnorm(x = x, mean = par[1], sd = par[2], log = TRUE)
+  sum(ll)
+}
+```
+
+Answer the following questions:
+
+1. does the optimization procedure converged? how do you know?  -- 15 pkt
+2. what is $\hat{\mu}$ and $\hat{\sigma}$? -- 2.5 pkt
+3. what are the standard errors for the estimated vector of parameters?  -- 2.5 pkt
+
+**Code:**
+Optimizing requires the maxLik package
+```{r, echo=FALSE}
+# (echo=FALSE just prevents all install info being printed out)
+
+# install.packages("maxLik") <- uncomment if necessary
+library(maxLik)
+```
+Using the maxLik package
+```{r}
+# 1. Make the data provided in the task into an R variable (just copy-paste)
+data <- c(4.07494681300632, 5.7148180969208, 3.1696871449594, 3.77524642167328, 
+4.46833324819968, 4.56771069143404, 4.26893543498955, 3.3016304744712, 
+4.18479091459935, 3.47941871946925, 3.57894570862655, 4.02342131334782, 
+3.73076384712707, 4.39041119830134, 1.46298804791452, 3.72801772377334, 
+5.09573834528924, 3.54954319943814, 5.21867233269345, 3.95197239818281, 
+3.28940759528888, 3.85639735429932, 3.89654094561459, 3.77766184858072, 
+4.11613902065076, 4.57473478500872, 3.09991078675786, 3.81102685682754, 
+3.99499558435899, 3.61166770519569, 5.30696989384061, 4.95162940967589, 
+3.49893321727876, 4.20055123121829, 4.98228404197474, 3.38113366317742, 
+3.64180416501869, 3.23219328805443, 3.32723552316927, 4.6197255709024, 
+3.98868977386315, 5.6846104466723, 4.76988344527926, 5.75081863801064, 
+3.62563656179989, 3.61950873573737, 5.51615939625618, 2.26011074048123, 
+4.51463582012669, 3.94469958851262)
+
+# 2. Call the maxLik function and put the result into a variable "results"
+results <- maxLik(logLik = mle_pdf, start = c(5,1), x = data, method = "NR")
+# 1st argument is the log-likelihood (provided in task)
+# 2nd is the starting parameters (this can be whatever we want)
+# 3rd is the data provided in the task
+# 4th is the method - it has to be "NR" for Newton-Rhapsod
+
+# 3. Look at the summary of results to draw conclusions
+summary(results)
+# (ignore any NaNs produced warnings btw)
+
+```
+**Answers:**
+
+
+1. Yes, the optimization procedure does converge. We know it, because the function returns a return code 1: gradient close to zero.
+In addition, the final results remains the same no matter what starting arguments we provide - it's the same for c(0.1, 999), c(5, 1) and c(1000, 0.007) etc.
+
+
+2. $\hat{\mu} = 4.05163$ and $\hat{\sigma} = 0.83513$. We know this because in the output of summary(results) we can see the estimates of the first parameter (mean) and second (std. deviation)
+
+
+3. The stadard errors are 0.11810 for $\hat{\mu}$ and 0.08351 for $\hat{\sigma}$. Again, it's in the output.
+
+___
+
+**Excercise 2** (15 pts)
+
+Assume that we have the following data concerning the average reaction time per day (in milliseconds) for subjects in a sleep deprivation study.
+
+```{r eval=F, echo=T}
+  head(sleepstudy)
+  Reaction Days Subject
+1 249.5600    0     308
+2 258.7047    1     308
+3 250.8006    2     308
+4 321.4398    3     308
+5 356.8519    4     308
+6 414.6901    5     308
+```
+
+where:
+
++ Reaction -- Average reaction time (ms)
++ Days -- Number of days of sleep deprivation
++ Subject -- Subject number on which the observation was made.
+
+We built the following model:
+
+```{r eval=F, echo=T}
+Call:
+formula = Reaction ~ Days, family = gaussian(), data = sleepstudy, id = Subject, corstr = "ar")
+
+ Coefficients:
+            Estimate Std.err    Wald Pr(>|W|)    
+(Intercept)  254.230   6.485 1536.69  < 2e-16 ***
+Days          10.467   1.448   52.25 4.89e-13 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation structure = ar1 
+Estimated Scale Parameters:
+
+            Estimate Std.err
+(Intercept)     2259   533.6
+  Link = identity 
+
+Estimated Correlation Parameters:
+      Estimate Std.err
+alpha   0.8536 0.05214
+Number of clusters:   18  Maximum cluster size: 10 
+```
+
+Please answer the following questions:
+
+1. what type of model we estimated? Please read carefuly the output and specify the details -- 4 pkt
+2. how many subjects were in the study? -- 1 pkt
+3. please explain in plain words what is the impact of variable `Days` on the target variable -- 5 pkt
+4. what is the `ar1` in the model? what does `alpha` mean?  -- 5 pkt 
+
+**Answers:**
+
+1. This is an AR1 model, as denoted by correlation structure = ar1. It's an autoregressive linear predictive model. (mieliśmy to pod koniec na ekonometrii chyba)
+
+2. There were 18 subjects - each subject is one cluster.
+
+3. We can expresss the amount of time in milliseconds it would take someone to react with the following equation: $Reaction \ time = Sleepless \ days * 10.467 + 254.230$. What this means is that with each additional day of no sleeping, the reaction time of a subject is going to be 10.467ms slower.
+
+4. AR1 is the type of model that could be created. Alpha is a measure of how much impact does an observation in one day depend on the observation in the previous day. In this case, alpha is 85% - this means that an observation on a given day is dependant on an observation made one day before.
+
+**Excercise 3** (15 pts)
+
+Please use the following data `mtcars` (run `data(mtcars)`) for this study. Specify the following model linear model
+
+$$
+\text{mpg} = wt + wt^2 + cyl + am
+$$
+
+and answer the following questions:
+
+1. please derive marginal effect for wt, i.e. $\frac{\partial \text{mpg}}{\partial \text{wt}}$ and explain what does it mean -- 5 pkt
+2. please calculate marginal effects and its standard errors for the above model -- 5 pkt
+3. please explain the output from the point above (interpret the results) -- 5 pkt
+
+**Answers:**
+1. The marginal effect (partial derivative) is equal to $2wt + 1$ (just take the derivative of expressions with $wt$ and treat the rest as constants).
+
+2. We have to create a model as code first.
+```{r}
+our_model <- lm(formula = mpg ~ wt + I(wt^2)+ cyl + am, data = mtcars)
+#lm stands for linear model and is used to construct the model itself
+#1st argument is the formula (provided in exercise). pls note the use of I() - this tells R to interpret the function "as is". Without it it would break because of the ^2.
+#2nd is just the data
+
+# call the summary of our model
+summary(our_model)
+```
+```{r}
+# to calculate margins we need margins package
+library(margins)
+marginal_effects <- margins(our_model)
+
+# put it into summary
+summary(marginal_effects)
+```
+
+
+3. We took a look at different factors in cars: am (transmission, 0 = auto, 1 = manual), cyl (number of cylinders) and wt (weight in 1000lbs). We would like to know how they impact mpg (miles/gallon of fuel).
+In the summary of marginal effects, we can notice the following:
+- Technically, as am increases by 1, the mpg decreases by 1.1725. However, because the absolute value of AME < SE, we do not interpret this result. (0 is in the confidence interval, and p-value is large)
+- As cyl increases by 1, the mpg decreases by 1.0655. SE is 0.4284, so real values deviate from model values by about 0.43.
+- As wt increases by 1, the mpg decreases by 4.6438. SE is 1.0403, so real values deviate from model values by about 1.04.
+
+
+
+
+
+
+
+
+
+
+
+

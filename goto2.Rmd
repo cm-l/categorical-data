@@ -1,0 +1,9 @@
+---
+title: 'Gotowiec #1'
+author: "e-byznes siema"
+date: '2022-06-09'
+output: html_document
+---
+
+
+
