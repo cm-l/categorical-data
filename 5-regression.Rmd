@@ -1,0 +1,71 @@
+---
+title: "Regression"
+output: html_notebook
+---
+
+```{r}
+# Data set
+head(mtcars)
+```
+
+```{r}
+model1 <- lm(mpg ~ cyl, data=mtcars) #assuming cylinders is continuous
+summary(model1)
+```
+
+The resulting model is $y = 38 - 3cyl$
+
+```{r}
+mtcars$cyl_f <- factor(mtcars$cyl) # convert cylinders to factor categorical
+model2 <- lm(mpg ~ cyl_f, data = mtcars)
+summary(model2)
+```
+
+The resulting model is $y = 27 - 7(cyl=6) - 12(cyl=8)$
+
+```{r}
+model3 <- lm(mpg~cyl_f, data = mtcars, contrasts = list(cyl_f = contr.sum)) # compare to overall average
+summary(model3)
+```
+
+```{r}
+#check if its a factor
+is.factor(mtcars$cyl_f)
+
+#what are the levels for this factor?
+levels(mtcars$cyl_f)
+
+#change the levels in factor
+mtcars$my_cyl_f <- relevel(mtcars$cyl_f, ref = "6") #now the reference is 6 instead of 4
+levels(mtcars$cyl_f)
+levels(mtcars$my_cyl_f)
+```
+
+```{r}
+model5 <- lm(mpg ~ factor(cyl), data = mtcars)
+summary(model5)
+
+# extract matrix
+x <- model.matrix(model5)
+head(x)
+```
+
+```{r}
+library(margins)
+model1 <- lm(mpg ~cyl_f*am + wt*am + wt, data = mtcars)
+summary(model1)
+```
+
+```{r}
+model1_mfx <- margins(model1)
+summary(model1_mfx)
+```
+
+
+```{r}
+# derivative calculations
+library(numDeriv)
+numDeriv::grad(func = function(x) 4 * x, x = 4)
+numDeriv::grad(func = function(x) 4*x^3 - 1,x = 4)
+```
+

@@ -1,0 +1,100 @@
+---
+title: "Logistic Regression"
+author: "CML"
+date: '2022-05-10'
+output: html_document
+---
+### Odds
+```{r}
+men_bought = 48
+men_didnt = 240
+men = men_bought + men_didnt
+
+odds = (men_bought/men)/(1-(men_bought/men))
+odds
+
+```
+
+### Logistic regression estimation
+```{r}
+# Data
+df1 <- data.frame(
+  gender = c("females", "males"),
+  bought = c(243, 48),
+  notbought = c(30,240)
+)
+df1
+
+```
+
+```{r}
+# Model
+m1 <- glm(
+   formula = cbind(bought, notbought) ~ gender,
+  data = df1,
+  family = binomial()
+)
+
+summary(m1)
+```
+
+```{r}
+df1$gender <- factor(df1$gender, levels = c("males","females"))
+#Model again to accomodate the labeling change
+m1 <- glm(
+   formula = cbind(bought, notbought) ~ gender,
+  data = df1,
+  family = binomial()
+)
+
+exp(coef(m1))
+```
+
+### More log reg
+```{r}
+df <- read.csv("https://raw.githubusercontent.com/DepartmentOfStatisticsPUE/cda-2022/main/data/count-data.csv")
+df$occup1 <- as.factor(df$occup1)
+df$prof = df$occup1 == 2
+head(df, 5)
+```
+
+```{r}
+tab1 <- xtabs(~ occup1 + computer, data = df)
+tab1
+plot(tab1)
+```
+
+### Looking into computer skills
+```{r}
+# Model estimate #1
+mc1 <- glm(formula = computer ~ occup1,
+           data = df,
+           family = binomial(),
+           subset = occup1 != 6) #Remove 6-code professions
+summary(mc1)
+
+```
+
+### Odds ratio
+```{r}
+
+mc1 |> coef() |> exp() |> round(2)
+
+```
+
+### Confidence intervals of odds ratio
+```{r}
+confint(m1) |> exp()
+```
+
+### Another model
+```{r}
+
+mc2 <- update(mc1, . ~ nace)
+summary(mc2)
+
+```
+
+```{r}
+mc2 |> coef() |> exp() |> round(2)
+```

@@ -1,0 +1,14 @@
+---
+title: "Homework2"
+output: html_document
+date: '2022-03-28'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+func = expression((factorial(n_2)/(factorial(n_11)*factorial(n_2-n_11)))*(n_11/N)^(n_11)*(1 - n_1/N)^(n_2 - n_11))
+D(func,'N')
+```

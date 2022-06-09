@@ -1,0 +1,73 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+install.packages("tidyverse")
+```
+
+
+```{r}
+
+beer <- read_excel("Zakupy.xls")
+names(beer) <- tolower(names(beer)) #lowercase for names
+head(beer) #display
+
+```
+```{r}
+ggplot(data = beer, aes(x = wiek, color = factor(plec))) + geom_density() + facet_wrap(~towar)
+```
+```{r}
+ggplot(data = beer, aes(x = wiek, color = factor(towar))) + geom_density() + facet_wrap(~plec)
+```
+### Making a logistic regression model
+```{r}
+m1 <- glm(formula = towar ~ wiek + plec, data = beer, family = binomial)
+
+summary(m1)
+```
+
+## Odds ratio
+```{r}
+m1 |> coef() |> exp() |> round(4)
+```
+
+## Compare women in their 40s with women in their 30s
+```{r}
+exp(-0.18668*40 - - 0.18668*30)
+```
+
+## Plot of regression model
+```{r}
+curve(exp(7.16164 -0.18668*x + 0.96478)/(1+exp(7.16164 -0.18668*x + 0.96478)), from = 18, to = 60, xlab = "Age", y = "P(Towar=1)")
+curve(exp(7.16164 -0.18668*x)/(1+exp(7.16164 -0.18668*x)), from = 18, to = 60, xlab = "Age", y = "P(Towar=1)", add = T, col = "red")
+```
+
+## Pseudo R^2
+```{r}
+1 - m1$deviance / m1$null.deviance
+```
+
+## Probabilities
+Probability that someone will buy a beer of given type
+```{r}
+prob1 <- predict(m1, type = "response")
+head(prob1)
+```
+
+## Confusion matrix
+Add thresholds for bought or not bought a beer.
+```{r}
+beer$prob <- prob1
+```
+
+```{r}
+xtabs(~ I(prob>=0.65)+towar, data = beer) |> prop.table(margin = 1)
+```
+```{r}
+roc_data <- calculate_roc(beer$prob, beer$towar)
+head(roc_data)
+ggroc(roc_data)
+```
+Top left corner (around 0.65 threshold) is the best here! We are only minimizing the errors of last row (false positives) though.

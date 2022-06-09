@@ -1,0 +1,180 @@
+---
+title: "Categorical Data Analysis Notebook 2 & 3 - Fitting distributions"
+output: html_document
+---
+
+## Maximum Likelihood Method
+1. The method assumes that there's some PDF that has its parameters. We call that PDF of a random variable $\theta$ a function $f$. Define this function.
+2. Define the log likelihood function.
+3. Minimize that log likelihood function - find its minimum by comparing the 1st derivative to 0.
+
+### Truncation vs. Censoring
+$x \in {0, 1, 2, 3, 4, 5}$
+**Truncation:**
+You "cut off" some results - in this case, 0.
+$x \in {1, 2, 3, 4, 5}$
+
+**Censoring:**
+Some results get "censored" - in this case, all results above 3 are going into one "bag".
+$x \in {1, 2, 3+}$
+
+### maxLik optimization by Newton-Rhapsod:
+```{r}
+library(maxLik)
+```
+
+### Test (remove later)
+```{r}
+mle_pdf <- function(par, x) {
+  ll <- dnorm(x = x, mean = par[1], sd = par[2], log = TRUE)
+  sum(ll)
+}
+
+data1 = c(3.78718877332813, 4.68014164437448, 9.84428380911144, 9.61421501484474, 
+2.37174749713281, 2.19224388007677, 5.10630925078237, 3.93951335403775, 
+5.87706444198355, 5.10081011333291, 3.79802920030784, 3.28786952139471, 
+4.61780002042081, 4.54502688883597, 4.81394412466177, 6.07434909629636, 
+5.15433439439471, 8.54637343443909, 4.72638684635291, 5.19326767698273, 
+10.3649529446309, 11.3723533606011, 8.14579921804343, 5.35029599479664, 
+4.78598707814242, 10.5861191775118, 2.97525499223921, 3.98046812766855, 
+0.797498388856344, 8.74551543997744, 9.6199971537601, 4.90930032517948, 
+8.65504331358266, 2.49621536633976, 6.0244721007162, 8.26748381662546, 
+3.07006936237438, 7.01940237987215, 11.2536037731912, 3.01150900621653, 
+3.57341226945029, 11.0138168687581, 6.80016310697844, 5.95754309963533, 
+11.4206153457887, 6.38983079676691, 6.63230305489194, 6.61687638115287, 
+5.25776122604167, 2.41232584838641)
+
+mle_pdf(1, data1)
+
+res <- maxLik::maxLik(logLik = mle_pdf, start = c(7,7), x = data1, method = "NR")
+
+summary(res)
+```
+
+```{r}
+library(maxLik)
+
+## log-likelihood function
+ll <- function(par, x) { # par - parameter of interest (lambda), x - our data
+  m <- sum(x)*log(par)-length(x)*log(exp(par)-1)
+  m
+}
+
+## gradient
+grad <- function(par, x)  {
+  g <- sum(x) / par - length(x)*exp(par)/(exp(par)-1)
+  g
+}
+
+
+## hessian
+hess <- function(par, x) {
+  h <- -sum(x)/par^2 + length(x)*exp(par)/(exp(par)-1)^2 
+  h
+}
+
+
+d <-  c(1645,183,37, 13,1,1)
+x <- rep(1:6,d)
+## without gradient and hessian
+res <- maxLik(logLik = ll, start = 1, x = x, method = "NR")
+
+## with gradient and hessian
+res2 <- maxLik(logLik = ll,  grad = grad, 
+            hess = hess, start = 1, x = x, method = "NR")
+
+summary(res)
+summary(res2)
+```
+
+### Homework task
+```{r}
+library(Rlab)
+
+
+
+n = 10000
+x_val = c(1:n)
+bern = dbinom(1:n,1,0.7) #z_i
+bern_v2 = dbern(1:3,0.7)
+
+
+lamb = 0.5 + 0.5 * bern #lambda_i
+
+poiss = dpois(1:n,lamb) #poisson distribution given lambda
+
+d <- c(1645,183,37, 13,1,1)
+x <- rep(1:6,d)
+
+```
+
+# Comparing fits
+
+Installing necessary packages:
+```{r}
+#install
+install.packages("vcd")
+install.packages("fitdistrplus")
+install.packages("countreg", repos="http://R-Forge.R-project.org")
+
+#activate
+library(vcd)
+library(fitdistrplus)
+library(countreg)
+library(MASS) #mass is also used for MLEs
+```
+
+Actually creating the rootograms:
+```{r}
+# Generating vectors y ~ NegativeBi(3,2) and x ~ Poisson(3)
+
+set.seed(1) #random seed
+n <- 500 #observations
+y <- rnbinom(n, mu = 3, size = 2) #the negative binomial dist
+x <- rpois(n, lambda = 3) #the poisson dist
+
+par(mfrow=c(1,2)) #making two graphs in a row!
+barplot(table(y), main = "y ~ NB(3,2)") #plot for NB
+barplot(table(x), main = "x ~ Pois(3)") #plot for Poisson
+
+# fitting the distributions
+fitdistr(x = y, densfun = "negative binomial")
+```
+
+
+### Estimating distribution using MLE (fitdistr)
+```{r}
+# fitting the distributions - fitdistr (with -r)
+fitdistr(x = y, densfun = "negative binomial") #returns kind of limited information
+```
+
+Different way
+```{r}
+# fitting the distributions - fitdist (without -r)
+#FIT FOR NEGATIVE BINOMIAL
+fit_dist_nb <- fitdist(data=y, method = "mle", distr="nbinom") #returns more info
+summary(fit_dist_nb) #even more info if put into summary()
+
+#FIT FOR POISSON
+fit_dist_pois <-fitdist(data=y, method = "mle", distr="pois")
+summary(fit_dist_pois)
+
+#IMPORTANT: this gives AIC and BIC output to THE CONSOLE - not the knitted notebook itself
+```
+
+### vcd - goodfit
+```{r}
+vcd_nb <- goodfit(y, "nbinomial")
+vcd_pois <- goodfit(y, "poisson")
+
+summary(vcd_nb)
+summary(vcd_pois)
+# likelihood ration is the G statistic - the lower the better
+```
+
+### Rootograms
+```{r}
+# Rootograms are included in the vcd package
+plot(vcd_nb)
+plot(vcd_pois)
+```

@@ -1,0 +1,27 @@
+---
+title: "Contingency Tables"
+output: html_notebook
+---
+# Task 1 - Chi Squared test for American voters
+
+```{r}
+data <- matrix(data = c(762,327,468, 484, 239, 477), nrow = 2, ncol = 3, byrow = T, dimnames = list(c("F","M"),c("Democrat","Independent","Republican")))
+data
+
+chisq.test(data)
+```
+
+```{r}
+vcd::assocstats(data)
+```
+
+# Counting fish and polish people
+
+```{r}
+nlp = 193874.3
+n1dot = 39862
+ndot1 = 1819
+
+varnlp = sqrt(((nlp^2)*(nlp-n1dot))/(n1dot*ndot1))
+varnlp
+```

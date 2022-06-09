@@ -1,0 +1,517 @@
+---
+title: "Categorical Data Analysis Notebook 1 - Binomial and Poisson"
+output: html_notebook
+---
+**Exercise 1: Football goals**
+A football player attempts to score 10 goals and has a 0.4 probability of scoring any individual goal.
+
+1) Distribution of X
+Data frame made with {d}ensity function of the {binom}ial distribution.
+```{r}
+data.frame(x=0:10,p=dbinom(x=0:10,size=10,prob=0.4))
+```
+
+2) Probability of exactly 4 goals being scored
+dbinom(how_many_times_to_score, how_many_attempts_at_scoring, probability_of_scoring_on_any_given_attempt_to_score)
+```{r}
+dbinom(4,size = 10, prob = 0.4)
+```
+
+3) Probability that at least 7 goals will be scored
+```{r}
+1 - pbinom(q=6,size=10,prob=0.4) # How likely are you to score at least 7 goals?
+```
+
+**Exercise 2: Poisson Distributions**
+Number of car accidents in one day in some city follows Poisson distribution with expected value of 2. How likely is it that the number of car crashes on a given day doesn't exceed (is at most) 4?
+"At most" - we don't have to substract the cumulative function from 1
+```{r}
+ppois(4, lambda=2)
+```
+
+## Exercises (PL):
+### Zadanie 1.
+Koszykarz podczas treningu oddaje 10 rzutow za 3 punkty. Prawdopodobienstwo trafienia w pojedynczym rzucie wynosi 0,4. Niech zmienna losowa X
+przyjmuje wartosci rowne liczbie celnych rzutow.
+(a) Znajd´z rozk lad zmiennej losowej X.
+(b) Sporz ,ad´z wykres rozk ladu prawdopodobie´nstwa zmiennej losowej X.
+(c) Oblicz prawdopodobie´nstwo, ˙ze koszykarz trafi dok ladnie 6 razy za 3 punkty.
+(d) Oblicz prawdopodobie´nstwo, ˙ze koszykarz odda co najwy˙zej 3 celne rzuty za
+3 punkty.
+
+**a.**
+```{r}
+datastuff_polishexercise1 <- data.frame(x=0:10,p=dbinom(x=0:10,size=10,prob=0.4))
+datastuff_polishexercise1 # Variable stored for future use, maybe?
+```
+**b.**
+```{r}
+#install just ggplot2:
+install.packages("ggplot2")
+#activate library
+library(ggplot2)
+```
+```{r}
+datastuff_polishexercise1 <- data.frame(x=0:10,p=dbinom(x=0:10,size=10,prob=0.4))
+ggplot(data=datastuff_polishexercise1,aes(x=x,y=p)) + geom_col()
+```
+**c.**
+```{r}
+dbinom(6,size = 10, prob = 0.4)
+```
+
+**d.**
+```{r}
+pbinom(3,size=10,prob=0.4) # How likely are you to score at most 3 goals?
+```
+
+
+### Zadanie 2.
+Strzelec oddaje 5 strza l´ow do tarczy. Prawdopodobie´nstwo trafienia
+w pojedynczym strzale wynosi 0,8. Niech zmienna losowa X przyjmuje warto´sci
+r´owne liczbie celnych strza l´ow. 
+(a) Znajd´z rozk lad zmiennej losowej X.
+(b) Sporz ,ad´z wykres rozk ladu prawdopodobie´nstwa zmiennej losowej X.
+(c) Oblicz prawdopodobie´nstwo, ˙ze strzelec trafi dok ladnie 4 razy w tarcz ,e.
+(d) Oblicz prawdopodobie´nstwo, ˙ze strzelec trafi w tarcz ,e co najwy˙zej 3 razy.
+(e) Oblicz prawdopodobie´nstwo, ˙ze strzelec trafi w tarcz ,e co najmniej 2 razy
+
+**a.**
+```{r}
+attempts = 5
+p = 0.8
+datastuff_polishexercise2 <- data.frame(x=0:attempts,p=dbinom(x=0:attempts,size=attempts,prob=p))
+datastuff_polishexercise2
+```
+**b.**
+```{r}
+ggplot(data=datastuff_polishexercise2,aes(x=x,y=p)) + geom_col()
+```
+**c.**
+```{r}
+dbinom(4,size=5,prob=0.8) # How likely are you to hit exactly 4 darts?
+```
+**d.**
+```{r}
+pbinom(3,size=5,prob=0.8) # How likely are you to hit at most 3 darts?
+```
+
+**e.**
+```{r}
+1 - pbinom((2-1),size=5,prob=0.8) # How likely are you to hit at least 2 darts?
+# there's a (2-1) in there, so that i remember that the "q" value should be 1 less than in the question
+```
+
+### Zadanie 3.
+Rodzina pragnie mie´c 3 dzieci. Zak ladaj ,ac niezale˙zno´s´c zdarze´n oraz przyjmuj ,ac, ˙ze prawdopodobie´nstwo urodzenia si,e dziewczynki wynosi 0,483 wyznacz rozk lad prawdopodobie´nstwazmiennej losowej zdefiniowanej jako liczba ch lopc´ow w´sr´od 3 urodzonych w tej rodzinie dzieci. Oblicz warto´s´c oczekiwan ,a oraz wariancj,e tej zmiennej losowej.
+```{r}
+attempts = 3 # How many children are there going to be?
+girl_p = 0.483 # How likely is it that the child will be a girl?
+boy_p = 1 - girl_p # How likely is it that the child will be a boy?
+
+# Distribution
+children_dist <- data.frame(x=0:attempts,p=dbinom(x=0:attempts,size=attempts,prob=boy_p))
+children_dist
+
+# Expected value E(X)
+weighted.mean(children_dist$x, children_dist$p)
+
+# Variance Var(X)
+attempts * girl_p * boy_p #n * p * q
+```
+
+### Zadanie 4.
+Za l´o˙zmy, ˙ze pewna zmienna losowa X ma rozk lad dwumianowy z prawdopodobie´nstwem sukcesu p = 0.6. Sporz ,ad´z wykres rozk ladu prawdopodobie´nstwazmiennej losowej X w zale˙zno´sci od liczby do´swiadcze´n n. Przyjmij nast,epuj ,ace
+warto´sci: n = 5, 10, 15, 20.
+```{r}
+probability = 0.6
+
+# This doesn't work for some reason. 
+for(i in c(5,10,15,20)) {
+  d <- data.frame(x=0:i,p=dbinom(x=0:i,size=i,prob=probability))
+  ggplot(data=d,aes(x=x,y=p)) + geom_col()
+}
+
+# Do it manually instead. :(
+d1 <- data.frame(x=0:5,p=dbinom(x=0:5,size=5,prob=probability))
+ggplot(data=d1,aes(x=x,y=p)) + geom_col()
+
+d2 <- data.frame(x=0:10,p=dbinom(x=0:10,size=10,prob=probability))
+ggplot(data=d2,aes(x=x,y=p)) + geom_col()
+
+d3 <- data.frame(x=0:15,p=dbinom(x=0:15,size=15,prob=probability))
+ggplot(data=d3,aes(x=x,y=p)) + geom_col()
+
+d4 <- data.frame(x=0:20,p=dbinom(x=0:20,size=20,prob=probability))
+ggplot(data=d4,aes(x=x,y=p)) + geom_col()
+```
+
+### Zadanie 5.
+W urnie znajduje si,e pi,e´c kul bia lych i dwie czarne.  Losujemy ze zwracaniem trzy razy po jednej kuli. Poda´c rozk lad prawdopodobie´nstwa liczby wylosowanych kul bia lych i obliczy´c parametry tego rozk ladu.
+```{r}
+white <- 5
+black <- 2
+attempts <- 3
+d <- data.frame(x=0:attempts,p=dbinom(x=0:attempts,size=3,prob=white/(white+black)))
+d
+
+##E(X)
+weighted.mean(d$x,d$p)
+#Var(X)
+n <- 3
+p <- 5/7
+q <- 1 - p
+n * p * q
+```
+
+
+### Zadanie 6.
+W firmie produkuj ,acej okna pracownik obs luguje 5 maszyn wytwarzaj ,acych pewien element. Prawdopodobie´nstwo, ˙ze w ci ,agu dnia maszyna nie b ,
+edzie wymaga´c naprawy wynosi 0,9. Maszyny pracuj ,a niezale˙znie od siebie.
+(a) Wyznaczy´c rozk lad prawdopodobie´nstwa liczby maszyn, kt´ore w ci ,agu dniaich pracy wymaga´c b,ed ,a naprawy.
+(b) Sporz ,ad´z wykres rozk ladu prawdopodobie´nstwa tej zmiennej.
+(c) Obliczy´c prawdopodobie´nstwo, ˙ze dok ladnie 2 maszyny w ci ,agu dnia wymaga´cb,ed ,a naprawy.
+(d) Obliczy´c prawdopodobie´nstwo, ˙ze co najwy˙zej 2 maszyny w ci ,agu dnia wymaga´c b,ed ,a naprawy.
+(e) Obliczy´c prawdopodobie´nstwo, ˙ze mniej ni˙z 2 maszyny w ci ,agu dnia wymaga´cb,ed ,a naprawy.
+
+**a.**
+```{r}
+attempts = 5
+works_fine_p = 0.9
+needs_fixing_p = 1 - works_fine_p
+dist_machines <- data.frame(x=0:attempts,p=dbinom(x=0:attempts,size=attempts,prob=needs_fixing_p))
+dist_machines
+```
+
+**b.**
+```{r}
+ggplot(data=dist_machines,aes(x=x,y=p)) + geom_col()
+```
+
+**c.**
+```{r}
+dbinom(2,size = attempts, prob = needs_fixing_p)
+```
+
+**d.**
+```{r}
+pbinom(2,size = attempts, prob = needs_fixing_p)
+```
+
+**e.**
+```{r}
+# note to self to read tasks carefully
+pbinom(1, size = attempts, prob = needs_fixing_p)
+```
+
+### Zadanie 7.
+W pewnej du˙zej firmie w dziale ksi,egowo´sci pracuje 5 os´ob. Prawdopodobie´nstwo nieprzyj´scia do pracy na skutek choroby ka˙zdej z nich wynosi 0.1
+Obliczy´c prawdopodobie´nstwo tego ˙ze:
+(a) wszystkie osoby przyjd ,a do pracy.
+(b) trzy osoby nie przyjd ,a do pracy.
+(c) wi,ecej ni˙z dwie osoby nie przyjd ,a do pracy
+
+**a.**
+```{r}
+attempts = 5
+sick_p = 0.1
+healthy_p = 1 - sick_p
+
+dbinom(attempts, size = attempts, prob = healthy_p)
+```
+
+**b.**
+```{r}
+dbinom(3, size = attempts, prob = sick_p)
+```
+
+**c.**
+```{r}
+1 - pbinom(2, size = attempts, prob = sick_p)
+```
+
+### Zadanie 8.
+W partii 100 ˙zar´owek 10 jest wadliwych. Kontroler jako´sci pobiera w spos´ob niezale˙zny n = 8 ˙zar´owek.
+(a) Znale´z´c rozk lad zmiennej losowej X przyjmuj ,acej warto´sci r´owne liczbie wylosowanych wadliwych ˙zar´owek.
+(b) Obliczy´c P(2 < X <= 5).
+(c) Obliczy´c P(X < 4).
+(d) Sporz ,ad´z wykres rozk ladu prawdopodobie´nstwa tej zmiennej
+
+**a.**
+```{r}
+attempts = 8
+detected_mistake_p = 0.1 # 10 bulbs in a 100 are bad
+
+bulb_dist <- data.frame(x=0:attempts,p=dbinom(x=0:attempts,size=attempts,prob=detected_mistake_p))
+bulb_dist
+```
+
+**b.**
+```{r}
+# P(2 < X <= 5)
+sum(dbinom(3:5, size = attempts, prob = detected_mistake_p))
+# HARD INEQUALITY (<) means that "q" is 1 closer to X - in this case, q on the left is q+1 because of the hard inequality. if it were on the right, it'd be q-1.
+# SOFT INEQUALITY (<=) means that "q" remains the same - in this case, q on the right is just q because of the soft inequality
+```
+
+**c.**
+```{r}
+# P(X < 4) - another way to phrase this would be:
+# What's the probability of detecting less than four (so at most three) light bulbs?
+pbinom((4-1), size = attempts, prob = detected_mistake_p)
+# remember: (q-1) when there's a hard inequality, regardless of if it's "at least" or "at most"
+```
+
+**d.**
+```{r}
+ggplot(data=bulb_dist,aes(x=x,y=p)) + geom_col()
+```
+
+### Zadanie 9.
+Wiadomo, ˙ze dla pewnej zmiennej losowej X 
+P(X = k) = [równanie które można zobaczyć w pdfie]
+Przedstawi´c rozk lad tej zmiennej graficznie, obliczy´c P (X ˇ 3) i P (X = 2). Obliczy´c warto´s´c oczekiwan ,a, wariancj,e oraz odchylenie standardowe zmiennej losowej X.
+
+```{r}
+attempts = 6
+probability = 0.2
+
+# P(X >= 3) - probability that there will be at least 3 (more than 2) successes
+1 - pbinom((3-1), size = attempts, prob = probability)
+# "at least 3" so 2-1
+
+
+# P(X = 2)
+dbinom(2,size = attempts, prob = probability)
+```
+
+### Zadanie 10.
+W pewnym towarzystwie ubezpieczeniowym 5% wszystkich zg laszanych szk´od stanowi ,a wypadki samochodowe. Jakie jest prawdopodobie´nstwo, ˙ze w´sr´od zg loszonych 15 szk´od liczba wypadk´ow samochodowych b ,edzie wi,eksza ni˙z 3.
+```{r}
+attempts = 15
+car_p = 0.05
+
+# P(X > 3) - probability that more than 3 cases (at least 4 cases) are going to be car accidents
+1 - pbinom(3, size = attempts, prob = car_p)
+```
+
+### Zadanie 11.
+W pewnym salonie Opla sprzedaje si,e w ci ,agu miesi ,aca ´srednio 5 samochod´ow tej marki. Jakie jest prawdopodobie´nstwo, ˙ze w miesi ,acu sprzedaneb,ed , co najwy˙zej 2 auta.
+
+```{r}
+ppois(2, lambda=5) # lambda is the expected value
+```
+### Zadanie 12.
+Liczb,e dni opuszczonych przez student´ow w listopadzie w wylosowanej pr´obie 250 student´ow charakteryzuje poni˙zszy szereg rozdzielczy:
+```{r}
+days_missed <- c(0, 1, 2, 3, 4, 5)
+students_amount <- c(30, 110, 50, 40, 15, 5)
+d <- data.frame(days=days_missed,students=students_amount)
+d
+sum(students_amount)
+
+lam <- weighted.mean(d$days,d$students) # Expected value E(X) so it's lambda
+print("Teoretyczne")
+ceiling(ppois(0,lam) * sum(students_amount))
+ceiling(ppois(1,lam) * sum(students_amount)-ppois(0,lam) * sum(students_amount))
+ceiling(ppois(2,lam) * sum(students_amount)-ppois(1,lam) * sum(students_amount))
+ceiling(ppois(3,lam) * sum(students_amount)-ppois(2,lam) * sum(students_amount))
+ceiling(ppois(4,lam) * sum(students_amount)-ppois(3,lam) * sum(students_amount))
+ceiling(ppois(5,lam) * sum(students_amount)-ppois(4,lam) * sum(students_amount))
+ceiling(ppois(6,lam) * sum(students_amount)-ppois(5,lam) * sum(students_amount))
+
+print("Loop")
+# Do loops work in R.cloud?
+for (i in 0:6) {
+  ceiling(ppois(i,lam) * sum(students_amount)-ppois(i-1,lam) * sum(students_amount))
+}
+#theory
+```
+(a) Zak ladaj ,ac, ˙ze liczba dni opuszczonych na uczelni w ci ,agu miesi ,aca podlega rozk ladowi Poissona, ustal liczebno´sci teoretyczne.
+(b) Oblicz prawdopodobie´nstwo, ˙ze studenci opuszczaj ,a minimum dwa dni, a maksimum 4 dni zaj,e´c.
+
+**a.**
+```{r}
+
+```
+
+**b.**
+```{r}
+
+```
+
+### Zadania 13.
+Pewien m lody matematyk pisz ,acy swoje artyku ly w programie LATEX stwierdzi l, ˙ze pope lnia ´srednio 4 liter´owki na jedn ,a stron,e. Wybieramy losowo jedn ,a z wielu stron napisanych przez tego matematyka. Jakie jest prawdopodobie´nstwo,
+˙ze znajdziemy na niej co najwy˙zej 3 b l,edy.
+
+```{r}
+lam = 4
+errors = 3
+
+# 3 or less means that we want the LOWER TAIL of the function (it's the default setting)
+ppois(errors, lambda = lam, lower.tail = TRUE)
+
+```
+
+### Zadania 14.
+Zmienna losowa X ma rozk lad Poissona z warto´sci ,a oczekiwan ,a r´own ,a 3. Wyznaczy´c P (X <= 6) oraz P (X >= 3)
+
+```{r}
+lam = 3
+
+# P(X <= 6)
+ppois(6, lambda = lam, lower.tail = TRUE) # at MOST 6 (less than 7)
+
+# P(X >= 3)
+ppois((3-1), lambda = lam, lower.tail = FALSE) # at LEAST 3 (more than 2)
+```
+
+### Zadanie 15
+Dla pewnej zmiennej losowej X o rozk ladzie Poissona zachodzi warunek P (X = 0) = 0.2. Znale´z´c parametry rozk ladu tej zmiennej.
+```{r}
+# P(X=0) = 0.2
+# k = x, ppois = 0.2
+# [e^(-lambda)  * lambda^k] / k!
+# so:
+# [e^(-lambda) * lambda^0] / 0! = 0.2 
+# [e^(-lambda) * 1] / 1 = 0.2 
+# e^(-lambda) = 0.2
+# -log(0.2) = lambda
+-log(0.2)
+# for Poisson dist E(X) = Var(X)
+```
+### Zadanie 16
+Zmienna losowa X ma rozk lad okre´slony wed lug nast,epuj ,acej funkcji [takiej z lambdą = 4]
+Wyznaczy´c warto´s´c oczekiwan ,a i odchylenie standardowe tak zdefiniowanej zmiennej
+losowej oraz wyznaczy´c prawdopodobie´nstwo, ˙ze zmienna losowa:
+(a) przyjmie warto´s´c r´own ,a 1;
+(b) przyjmie warto´s´c nie wi,eksz ,a ni˙z 3;
+(c) przyjmie warto´s´c powy˙zej 5.
+
+**a.**
+```{r}
+lam = 4
+#E(X)
+lam
+#Var(X)
+lam
+
+dpois(1,lam)
+```
+**b.**
+```{r}
+ppois(3, lam) # at most 3 (so at least 4)
+```
+```{r}
+ppois(5, lam, lower.tail = FALSE ) # more than 5 (so at least 6)
+```
+
+### Zadanie 17
+Liczba wypadk´ow samochodowych w ci ,agu dnia w pewnym mie´sciema rozk lad Poissona o warto´sci oczekiwanej wynosz ,acej ⁄ = 2. Znale´z´c prawdopodobie´nstwo, ˙ze w ci ,agu dnia w ty mie´scie b ,ed ,a mia ly miejsce co najwy˙zej 4 wypadki samochodowe.
+```{r}
+lam = 2
+ppois(4, lam)
+```
+### Zadanie 18
+Zadanie 18. Zmienna losowa X ma rozk lad Poissona, przy czym ⁄ = 4. Obliczy´c:
+(a) P (X < 3).
+(b) P (X > 5).
+(c) P (X = 2).
+
+**a.**
+```{r}
+lam = 4
+ppois(2,lam)
+```
+**b.**
+```{r}
+lam = 4
+ppois(5,lam,lower.tail = FALSE)
+```
+**c.**
+```{r}
+lam = 4
+dpois(2,lam)
+```
+### Zadanie 19
+W sk lad pewnej skomplikowanej aparatury wchodzi 150 element´owokre´slonego rodzaju. Prawdopodobie´nstwo uszkodzenia w ci ,agu rokuka˙zdego z tych element´ow jest r´owne 0,004 i nie zale˙zy od stanu pozosta lych element´ow. Obliczy´cprawdopodobie´nstwo uszkodzenia w ci ,
+agu roku nie mniej ni˙z dw´och element´ow.
+```{r}
+k = 150
+prob = 0.004
+# [e^(-lambda)  * lambda^k] / k!
+# [e^(-lambda) * lambda^1] / 1! = 0.004 
+# e^(-lambda) * lambda = 0.004 
+# lambda * e^(-lambda) = 0.004
+#???
+```
+### Zadanie 20
+Zadanie 20. Za l´o˙zmy, ˙ze pewna zmienna losowa X ma rozk lad Poissona z parametrem ⁄. Sporz ,
+ad´z wykres rozk ladu prawdopodobie´nstwa zmiennej losowej X
+w zale˙zno´sci od warto´sci parametru ⁄. Przyjmij ⁄ = 2, 5, 8, 10.
+```{r}
+dp1 <- data.frame(x = 0:20, p = dpois(x=0:20,2))
+ggplot(dp1, aes(x=x, y=p)) + geom_col()
+
+dp2 <- data.frame(x = 0:20, p = dpois(x=0:20,5))
+ggplot(dp2, aes(x=x, y=p)) + geom_col()
+
+dp3 <- data.frame(x = 0:20, p = dpois(x=0:20,8))
+ggplot(dp3, aes(x=x, y=p)) + geom_col()
+
+dp4 <- data.frame(x = 0:20, p = dpois(x=0:20,10))
+ggplot(dp4, aes(x=x, y=p)) + geom_col()
+        
+```
+
+# Entry Exam Cheatsheet
+### Binomial
+```{r}
+### Binomial Distribution
+# E(X) = n * p <- attempts * success probability
+# Var(X) = n * p * q <- attempts * success probability * failure probability
+
+attempts = 10 #n
+succ_prob = 0.4 #p
+fail_prob = 1 - succ_prob #q
+
+# Probability of exactly X successes - P(X = exactly something)
+# Let's say exactly 4 goals so P(X = 4)
+dbinom(4, size = attempts, prob = succ_prob) # <- Dbinom
+
+# Probability of at most 5 goals - P(X <= 5)
+pbinom(5, size = attempts, prob = succ_prob) # <- Pbinom
+
+# Probability of at least 7 goals - P(X >= 7)
+1 - pbinom(6, size = attempts, prob = succ_prob)
+
+# Distribution function in a table
+data.frame(x=0:attempts,p=dbinom(x=0:attempts,size = attempts, prob = succ_prob))
+```
+
+###Poisson
+```{r}
+# P ( X = k) = [e^(-lambda)  * lambda^k] / k!
+lamb = 2 #just an example
+
+# E(X) = lambda
+# Var(X) = lambda
+
+# Exactly 4 four accidents (successes) = P(X = 4)
+dpois(4, lambda = lamb)
+
+# At most 4 accidents = P(P <= 4)
+ppois(4, lambda = lamb)
+
+# At least 3 (more than 2) accidents = P(X >= 3) or P(X > 2)
+1 - ppois(2, lambda = lamb)
+```
+
+Assume that X ~ Pois(4.5). Please calculate P(X > 3.25) and provide an answer rounded up to 4 digits.
+```{r}
+lamb = 4.5
+ex = 3.25
+
+1-ppois(ex, lambda = lamb)
+
+```
