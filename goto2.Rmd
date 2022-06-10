@@ -5,5 +5,173 @@ date: '2022-06-09'
 output: html_document
 ---
 
+**Excercise 1** (20 pts)
+
+Assume that the following data comes from $N(\mu,\sigma)$ with unknown $\mu$ and $\sigma$
+
+```{r}
+c(3.78718877332813, 4.68014164437448, 9.84428380911144, 9.61421501484474, 
+2.37174749713281, 2.19224388007677, 5.10630925078237, 3.93951335403775, 
+5.87706444198355, 5.10081011333291, 3.79802920030784, 3.28786952139471, 
+4.61780002042081, 4.54502688883597, 4.81394412466177, 6.07434909629636, 
+5.15433439439471, 8.54637343443909, 4.72638684635291, 5.19326767698273, 
+10.3649529446309, 11.3723533606011, 8.14579921804343, 5.35029599479664, 
+4.78598707814242, 10.5861191775118, 2.97525499223921, 3.98046812766855, 
+0.797498388856344, 8.74551543997744, 9.6199971537601, 4.90930032517948, 
+8.65504331358266, 2.49621536633976, 6.0244721007162, 8.26748381662546, 
+3.07006936237438, 7.01940237987215, 11.2536037731912, 3.01150900621653, 
+3.57341226945029, 11.0138168687581, 6.80016310697844, 5.95754309963533, 
+11.4206153457887, 6.38983079676691, 6.63230305489194, 6.61687638115287, 
+5.25776122604167, 2.41232584838641)
+```
+
+Based on the following log-likelihood function please estimate the parameters using maximum likelihood estimation. 
+
+```{r}
+mle_pdf <- function(par, x) {
+  ll <- dnorm(x = x, mean = par[1], sd = par[2], log = TRUE)
+  sum(ll)
+}
+```
+
+Answer the following questions:
+
+1. does the optimization procedure converged? how do you know?  -- 15 pkt
+2. what is $\hat{\mu}$ and $\hat{\sigma}$? -- 2.5 pkt
+3. what are the standard errors for the estimated vector of parameters?  -- 2.5 pkt
+
+**Code:**
+Optimizing requires the maxLik package
+```{r, echo=FALSE}
+# (echo=FALSE just prevents all install info being printed out)
+
+# install.packages("maxLik") <- uncomment if necessary
+library(maxLik)
+```
+Using the maxLik package
+```{r}
+# 1. Make the data provided in the task into an R variable (just copy-paste)
+data <- c(3.78718877332813, 4.68014164437448, 9.84428380911144, 9.61421501484474, 
+2.37174749713281, 2.19224388007677, 5.10630925078237, 3.93951335403775, 
+5.87706444198355, 5.10081011333291, 3.79802920030784, 3.28786952139471, 
+4.61780002042081, 4.54502688883597, 4.81394412466177, 6.07434909629636, 
+5.15433439439471, 8.54637343443909, 4.72638684635291, 5.19326767698273, 
+10.3649529446309, 11.3723533606011, 8.14579921804343, 5.35029599479664, 
+4.78598707814242, 10.5861191775118, 2.97525499223921, 3.98046812766855, 
+0.797498388856344, 8.74551543997744, 9.6199971537601, 4.90930032517948, 
+8.65504331358266, 2.49621536633976, 6.0244721007162, 8.26748381662546, 
+3.07006936237438, 7.01940237987215, 11.2536037731912, 3.01150900621653, 
+3.57341226945029, 11.0138168687581, 6.80016310697844, 5.95754309963533, 
+11.4206153457887, 6.38983079676691, 6.63230305489194, 6.61687638115287, 
+5.25776122604167, 2.41232584838641)
+
+# 2. Call the maxLik function and put the result into a variable "results"
+results <- maxLik(logLik = mle_pdf, start = c(2,2), x = data, method = "NR")
+# 1st argument is the log-likelihood (provided in task)
+# 2nd is the starting parameters (this can be whatever we want)
+# 3rd is the data provided in the task
+# 4th is the method - it has to be "NR" for Newton-Rhapsod
+
+# 3. Look at the summary of results to draw conclusions
+summary(results)
+# (ignore any NaNs produced warnings btw)
+
+```
+**Answers:**
+
+1. Yes, the optimization procedure does converge. We know it, because the function returns a return code 1: gradient close to zero.
+In addition, the final results remains the same no matter what starting arguments we provide - it's the same for c(0.1, 999), c(5, 1) and c(1000, 0.007) etc.
+
+
+2. $\hat{\mu} = 4.05163$ and $\hat{\sigma} = 0.83513$. We know this because in the output of summary(results) we can see the estimates of the first parameter (mean) and second (std. deviation)
+
+
+3. The stadard errors are 0.11810 for $\hat{\mu}$ and 0.08351 for $\hat{\sigma}$. Again, it's in the output.
+
+**Excercise 3** (15 pts)
+
+
+Please read the data from the following link
+
+```{r}
+glmp <- read.csv("https://stats.idre.ucla.edu/stat/data/poisson_sim.csv")
+head(glmp)
+```
+
+This dataset contains the following variables:
+
++ `num_awards` is the outcome variable and indicates the number of awards earned by students at a high school in a year, 
++ `math` is a continuous predictor variable and represents students’ scores on their math final exam, 
++ `prog` is a categorical predictor variable with three levels indicating the type of program in which the students were enrolled. It is coded as 1 = “General”, 2 = “Academic” and 3 = “Vocational”.
+
+Do the following exercixes:
+
+1. Set factor levels for `prog` variable according to above definition -- 2 pkt
+2. Does `num_awards` follow Poisson distribution? Comment the results -- 3 pkt
+3. Estimate the following model assuming quasi-Poisson distribution -- 5 pkt 
+
+$$
+\text{num_awards} = \text{math} + \text{prog} 
+$$
+
+4. explain the estimated parameters and what is the overall take-home note from this model (general interpretation) -- 5 pkt
+
+**Answers:**
+
+
+1. We have to change it in the dataset via function.
+```{r}
+factors <- factor(glmp$prog, labels = c("General", "Academic", "Vocational"))
+# 1st argument tells which variable should be converted to factors. glmp is our data, the $prog specifies that we want the "prog" in that data.
+# 2nd argument labels the variable using a vector of names (starting from the first)
+
+glmp$prog <- factors
+# don't forget to actually assign the factors to the "prog" variable
+
+head(glmp)
+```
+
+2. We can check it using the properties of a Poisson distribution. We know that the Poisson distribution has the same mean and variance. So let's just check if those are close enough.
+```{r}
+mean(glmp$num_awards) # Mean of awards
+var(glmp$num_awards) # Variance of awards
+```
+This is ok. They are not the exact same, but not too far apart. To investigate it further, we could construct a model using the Poisson distribution and measure how well it fits.
+```{r}
+model_pois <- glm(formula = num_awards ~ math + prog, data = glmp, family = poisson())
+# 1st argument is the formula: num_awards = math + prog (we use ~ instead of =)
+# 2nd is our data
+# 3rd is what distribution should be used
+```
+
+```{r}
+library(performance) # we can use this package to measure how well a model does
+```
+
+```{r}
+check_model(model_pois, check = "pp_check") # check = pp_check is here so only one test gets printed but can be ommited for a more detailed result
+```
+
+In the posterior predictive check, we can see that our model predicted data looks very similar to the observed data, which confirms that this data follows a Poisson distribution. (also, the link to the data literally says "poisson_sim" so you know)
+
+3. We will construct a new model.
+```{r}
+model_quasipois <- glm(formula = num_awards ~ math + prog, data = glmp, family = quasipoisson)
+# 1st argument is the formula: num_awards = math + prog (we use ~ instead of =)
+# 2nd is our data
+# 3rd is what distribution should be used
+
+summary(model_quasipois)
+```
+4. In the resulting model we can see that math is > 0, so it does have a positive impact on the number of awards received. As for prog: we remember, that the missing category in the output is the one we are comparing others to. In our case, progGeneral is missing. So progAcademic having a positive value should be interpreted as "students enrolled in the academic program are receiving more awards than students enrolled in the general program". The same is true for students enrolled in the vocational program. We ignore the intercept.
+
+We can explore the model further and take a look at the coefficients to interpret returned values.
+```{r}
+coef(model_quasipois)
+```
+This provides a formula for predicting how many awards someone might receive: $Awards = Math \ score * 0.07 + Academic*1.078+Vocational*0.37$ (again, we ommit the intercept).
+
+
+
 
 
