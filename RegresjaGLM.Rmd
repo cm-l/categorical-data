@@ -1,0 +1,179 @@
+---
+title: "Zajęcia 7"
+output: html_notebook
+---
+
+Zajęcia z 26.04.22 były po polsku.
+
+### Regresja GLM - Poisson
+```{r}
+# Wczytywanie danych z pliku .csv załączonego na moodle
+aggdata <- read.csv(file = "beers-glm-agg.csv", encoding = "UTF-8") # argument encoding to kwestia polskich znaków
+head(aggdata) # test danych
+
+# stworzenie modelu regresji poissona
+model <- glm(formula = beers ~ klm, data = aggdata, family = poisson)
+summary(model)
+```
+**Wnioski:** Referencyjnym typem miasta są wsie (nie ma ich w podsumowaniu modelu). W tych mniejszych miejscowościach kupuje się mniej piwa niż w dużych miastach (może w ramach imprez, wesel i tak dalej?). Widać to po kolumnie "estimate" po znakach - sama interpretacja parametrów już odbywa się na danych przekształconych.
+
+```{r}
+# przekształcenie parametrów do interpretacji
+exp(coef(model))[2:7]
+```
+**Wnioski:** W tym modelu wykładniczym wzrost x o jednostkę to wzrost y o % (poniżej 1 oznacza spadek). Pomiędzy dwoma identycznymi gospodarstwami, które różnią się tylko kategorią wieś-miasto poniżej 20k, gospodarstwo w mieście poniżej 20k będzie kupowało 72% tego co kupuje gospodarstwo na wsi.
+
+```{r}
+# Czy to jest rozkład poissona, czyli taki gdzie E(X) = Var(X)?
+mean(aggdata$beers)
+var(aggdata$beers)
+# No raczej nie.
+```
+
+### Test dyspersji
+Wykonajmy test, żeby sprawdzić czy w naszych danych wykonuje nadmierna dyspersja.
+```{r}
+library(AER)
+```
+
+```{r}
+dispersiontest(model)
+# H0 - nie ma nadmiernej dyspersji
+# H1 - jest nadmierna dyspersja
+```
+Bardzo mała wartość p - odrzucamy hipotezę zerową. Faktycznie, w naszych danych występuje nadmierna dyspersja.
+
+### Rootogram
+```{r}
+# Niezbędne paczki do wizualnej oceny poprawności modelu
+install.packages("countreg", repos="http://R-Forge.R-project.org")
+install.packages("xtable")
+install.packages("see")
+install.packages("performance")
+install.packages("sjPlot")
+```
+```{r}
+# wczytywanie pakietów
+library(AER)
+library(car)
+library(countreg)
+library(MASS)
+library(sjPlot)
+library(performance)
+```
+
+```{r}
+countreg::rootogram(model) #package::funkcja(argument)
+```
+**Wnioski:** - model bardzo kiepsko dopasowuje wartości - te początkowe traktuje tak, jakby w ogóle nie istniały. Pod koniec też się wykoleja.
+
+```{r}
+performance::check_model(model, panel = F)
+```
+**Wnioski:** Występują problemy z homogenicznością wariancji (wykres 3). Jest dużo wartości odstających (wykres 4, czerwone punkty powinny być w ramach przerywanych zielonych linii). Reszty są asymetryczne (ostatni wykres), ale normalność reszt obchodzi nas tylko dla regresji liniowej. Można jasno stwierdzić, że model nie jest dobry.
+
+### Dokładanie kolejnych zmiennych do modelu
+Próbujemy dodać dwie zmienne (education i woj).
+```{r}
+model2 <- glm(formula = beers ~ klm+education+woj, data = aggdata, family = poisson)
+summary(model2)
+```
+
+```{r}
+dispersiontest(model2)
+```
+Jest odrobinę lepiej, ale wciąż średniawo.
+
+```{r}
+countreg::rootogram(model2)
+```
+
+```{r}
+performance::check_model(model2, panel = F)
+```
+
+**Wnioski:** To nadal nie jest dobry model. Jest nieznacznie lepiej, ale nadal występują podobne problemy.
+### Zastosowanie alternatywnego rozkładu dla modelu
+Ewidentnie Poisson tu nie pasuje. Zastosujemy rozkład "negative binomial" typu I (prezentacja), inaczej quasi-poisson. To najczęstsza alternatywa do Poissona.
+
+```{r}
+model3 <- glm(formula = beers ~ klm + woj + education, data = aggdata, family = poisson()) # zwykły poisson
+model4 <- glm(formula = beers ~ klm + woj + education, data = aggdata, family = quasipoisson()) # quasipoisson (NB typ I)
+model5 <- glm.nb(formula = beers ~ klm + woj + education, data = aggdata) # NB typ II
+```
+
+Sprawdźmy poprawność modelu opartego o rozkład NB typu II.
+
+```{r}
+summary(model5)
+```
+
+```{r}
+rootogram(model5)
+```
+
+```{r}
+check_model(model5, panel = F)
+```
+
+```{r}
+check_predictions(model5) # fajny model NB
+check_predictions(model3) # stary, kiepski model
+```
+
+**Wnioski:** Jest git.
+Porównajmy też te wyniki wizualnie i kryterium informacyjnym BIC.
+
+```{r}
+install.packages("RColorBrewer")
+```
+
+```{r}
+plot_models(model3, model5, m.labels = c("Poisson", "NB"))
+```
+
+```{r}
+BIC(model3, model5)
+```
+
+**Wnioski:** Mniejsza wartość dla NB - jest lepszy.
+
+### Sprawdzanie, która zmienna jest najważniejsza.
+Wykorzystujemy test ANOVA.
+```{r}
+Anova(model5)
+```
+
+**Wnioski:** Najważniejszym czynnikiem determinującym spożycie piwa jest województwo, potem rozmiar miejscowości a najmniej istotna jest edukacja.
+
+
+```{r}
+glmp <- read.csv("https://stats.idre.ucla.edu/stat/data/poisson_sim.csv")
+
+
+# Exercise 1
+factorvec <- factor(glmp$prog, labels = c("General", "Academic", "Vocational"))
+glmp$prog <- factorvec
+head(glmp)
+
+# Exercise 2 - probably do a dispersion test or goodness of fit just to make sure
+mean(glmp$num_awards)
+var(glmp$num_awards)
+# Probably not poisson but lets check further in:
+
+# Exercise 3
+model <- glm(formula = num_awards ~ math + prog, data = glmp, family = quasipoisson)
+summary(model)
+
+modelpois <- glm(formula = num_awards ~ math + prog, data = glmp, family = poisson)
+summary(model)
+# Zobaczmy czy jest ok - kontynuacja exercise 2
+performance::check_model(modelpois, panel = F)
+rootogram(modelpois)
+dispersiontest(modelpois)
+
+check_predictions(modelpois)
+
+
+
+```
